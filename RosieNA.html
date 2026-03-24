@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Needs Assessment Lab — Rosie Home Tech</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Raleway:wght@300;400;500;600;700&family=Kurale&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --teal: #1D9E75; --teal-light: #E1F5EE; --teal-mid: #5DCAA5; --teal-dark: #085041;
+    --gold: #EF9F27; --gold-light: #FAEEDA; --gold-dark: #633806;
+    --charcoal: #2C2C2A; --gray-light: #F1EFE8; --gray-mid: #B4B2A9; --gray-soft: #D3D1C7;
+    --white: #ffffff; --text-main: #1a1a18; --text-muted: #5F5E5A; --text-light: #888780;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Raleway', sans-serif; background: #f8f7f3; color: var(--text-main); min-height: 100vh; }
+
+  .site-header { background: var(--charcoal); position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--teal); }
+  .header-inner { max-width: 980px; margin: 0 auto; padding: 14px 2rem; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon { width: 36px; height: 36px; background: var(--teal); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .brand-name { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--white); }
+  .brand-name span { color: var(--teal-mid); }
+  .header-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-mid); background: rgba(29,158,117,0.15); padding: 4px 10px; border-radius: 20px; }
+
+  .progress-wrap { background: var(--charcoal); padding: 0 2rem 12px; }
+  .progress-inner { max-width: 980px; margin: 0 auto; display: flex; gap: 6px; align-items: center; }
+  .step-dot { display: flex; align-items: center; gap: 6px; }
+  .step-dot .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: all 0.3s; }
+  .step-dot.active .dot { background: var(--teal); transform: scale(1.4); }
+  .step-dot.done .dot { background: var(--teal-mid); }
+  .step-dot .step-label { font-size: 10px; color: rgba(255,255,255,0.3); font-weight: 500; transition: color 0.3s; display: none; }
+  .step-dot.active .step-label { color: var(--teal-mid); display: block; }
+  .step-connector { flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+
+  .main { max-width: 860px; margin: 0 auto; padding: 3rem 2rem 4rem; }
+  .phase { display: none; animation: fadeUp 0.5s ease both; }
+  .phase.active { display: block; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  .phase-hero { background: var(--charcoal); border-radius: var(--radius); padding: 2.5rem; margin-bottom: 2rem; position: relative; overflow: hidden; }
+  .phase-hero::before { content: ''; position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: radial-gradient(circle, rgba(29,158,117,0.15) 0%, transparent 70%); pointer-events: none; }
+  .phase-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-mid); margin-bottom: 10px; }
+  .phase-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--white); line-height: 1.25; margin-bottom: 12px; }
+  .phase-subtitle { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 580px; }
+
+  .scenario-card { background: var(--white); border-radius: var(--radius); border: 1px solid #e8e6df; padding: 2rem; margin-bottom: 1.5rem; }
+  .scenario-card h3 { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 600; color: var(--text-main); margin-bottom: 1rem; padding-bottom: 8px; border-bottom: 2px solid var(--teal-light); }
+  .scenario-card p { font-size: 14px; color: var(--text-main); line-height: 1.75; margin-bottom: 10px; }
+  .scenario-card p:last-child { margin-bottom: 0; }
+
+  .stat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat-box { background: var(--white); border: 1px solid #e8e6df; border-radius: var(--radius-sm); padding: 14px 12px; text-align: center; }
+  .stat-box .val { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--teal); display: block; }
+  .stat-box .lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; display: block; line-height: 1.3; }
+
+  .warn-banner { background: var(--gold-light); border-left: 4px solid var(--gold); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 12px 16px; margin-bottom: 1.5rem; font-size: 13px; color: var(--gold-dark); line-height: 1.6; }
+  .warn-banner strong { font-weight: 700; }
+  .info-banner { background: var(--teal-light); border-left: 4px solid var(--teal); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 12px 16px; margin-bottom: 1.5rem; font-size: 13px; color: var(--teal-dark); line-height: 1.6; }
+
+  /* Student info */
+  .student-info { background: var(--white); border: 1px solid #e8e6df; border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .student-info h4 { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 1rem; }
+  .field-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+  .field-row label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+  .field-row input { border: none; border-bottom: 2px solid var(--teal-light); padding: 6px 4px; font-family: 'Raleway', sans-serif; font-size: 13px; color: var(--text-main); background: transparent; outline: none; width: 100%; transition: border-color 0.2s; }
+  .field-row input:focus { border-bottom-color: var(--teal); }
+
+  /* Product table */
+  .product-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 1rem; }
+  .product-table th { background: var(--charcoal); color: var(--white); font-weight: 700; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 9px 12px; text-align: left; }
+  .product-table td { padding: 9px 12px; border-bottom: 1px solid #f0ede6; color: var(--text-main); line-height: 1.4; }
+  .product-table tr:nth-child(even) td { background: var(--gray-light); }
+  .product-table .price { font-weight: 700; color: var(--teal); white-space: nowrap; }
+
+  /* Method selection */
+  .methods-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  .method-card { background: var(--white); border: 2px solid #e8e6df; border-radius: var(--radius); padding: 1.25rem; cursor: pointer; transition: all 0.25s; position: relative; }
+  .method-card:hover { border-color: var(--teal-mid); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(29,158,117,0.12); }
+  .method-card.selected { border-color: var(--teal); background: var(--teal-light); }
+  .method-card.selected::after { content: '✓'; position: absolute; top: 10px; right: 12px; width: 22px; height: 22px; background: var(--teal); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .method-card.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .method-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+  .method-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; }
+  .method-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .select-note { font-size: 13px; color: var(--text-muted); margin-bottom: 1rem; font-weight: 500; }
+  .select-note strong { color: var(--teal); }
+
+  /* Justify block */
+  .justify-block { background: var(--white); border: 1px solid #e8e6df; border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .justify-block label { display: block; font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; }
+  .justify-block .sub-label { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; display: block; line-height: 1.5; }
+  .word-counter { font-size: 11px; color: var(--text-light); margin-top: 6px; text-align: right; transition: color 0.2s; }
+  .word-counter.met { color: var(--teal); font-weight: 600; }
+  .word-counter.warn { color: #E24B4A; }
+
+  textarea { width: 100%; border: 1.5px solid #e8e6df; border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Raleway', sans-serif; font-size: 13px; color: var(--text-main); line-height: 1.6; resize: vertical; transition: border-color 0.2s; background: #fdfcfa; }
+  textarea:focus { outline: none; border-color: var(--teal); background: var(--white); }
+  textarea::placeholder { color: var(--text-light); }
+
+  /* Data reveal */
+  .data-reveal { background: var(--white); border: 1px solid #e8e6df; border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; }
+  .data-header { background: var(--charcoal); padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
+  .data-header .tag { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(29,158,117,0.25); color: var(--teal-mid); padding: 3px 8px; border-radius: 12px; }
+  .data-header h4 { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600; color: var(--white); }
+  .data-body { padding: 1.5rem; }
+  .data-sub { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 600; color: var(--charcoal); margin: 1rem 0 0.5rem; padding-bottom: 6px; border-bottom: 2px solid var(--teal-light); }
+
+  /* Data table */
+  .data-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 1rem; }
+  .data-tbl th { background: var(--gray-light); color: var(--text-muted); font-weight: 700; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e8e6df; }
+  .data-tbl td { padding: 9px 12px; border-bottom: 1px solid #f0ede6; color: var(--text-main); vertical-align: top; line-height: 1.4; }
+  .data-tbl tr:last-child td { border-bottom: none; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .pill-red { background: #FCEBEB; color: #A32D2D; }
+  .pill-green { background: #EAF3DE; color: #3B6D11; }
+  .pill-amber { background: var(--gold-light); color: var(--gold-dark); }
+  .pill-missing { background: #FCEBEB; color: #A32D2D; font-size: 10px; letter-spacing: 0.04em; }
+
+  /* Quote */
+  .quote { border-left: 3px solid var(--teal-mid); background: var(--teal-light); padding: 12px 16px; margin-bottom: 10px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .quote p { font-size: 13px; font-style: italic; color: var(--teal-dark); line-height: 1.6; margin-bottom: 4px; }
+  .quote .attr { font-size: 11px; font-weight: 700; color: var(--teal); font-style: normal; }
+
+  /* Observation */
+  .obs-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0ede6; align-items: flex-start; }
+  .obs-item:last-child { border-bottom: none; }
+  .obs-num { min-width: 24px; height: 24px; background: var(--teal); color: white; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .obs-text { font-size: 13px; color: var(--text-main); line-height: 1.6; }
+
+  /* Analysis */
+  .prompt-item { background: var(--white); border: 1px solid #e8e6df; border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .prompt-item .q-num { font-size: 11px; font-weight: 700; color: var(--teal); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .prompt-item .q-text { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; line-height: 1.4; }
+  .prompt-item .q-hint { font-size: 12px; color: var(--text-muted); font-style: italic; margin-bottom: 10px; line-height: 1.5; }
+
+  /* Checklist */
+  .checklist { background: var(--white); border: 1px solid #e8e6df; border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .checklist h4 { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--teal-light); }
+  .check-item { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; font-size: 13px; color: var(--text-main); line-height: 1.5; }
+  .check-item::before { content: '→'; color: var(--teal); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+  /* Buttons */
+  .btn-primary { background: var(--teal); color: white; border: none; border-radius: var(--radius-sm); padding: 13px 28px; font-family: 'Raleway', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-primary:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(29,158,117,0.3); }
+  .btn-primary:disabled { background: var(--gray-mid); cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-secondary { background: transparent; color: var(--teal); border: 2px solid var(--teal); border-radius: var(--radius-sm); padding: 11px 24px; font-family: 'Raleway', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-secondary:hover { background: var(--teal-light); }
+  .btn-download { background: var(--charcoal); color: white; border: none; border-radius: var(--radius-sm); padding: 14px 32px; font-family: 'Raleway', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 10px; }
+  .btn-download:hover { background: var(--teal-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+  .btn-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 1.5rem; }
+
+  .error-msg { background: #FCEBEB; border: 1px solid #F09595; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: #A32D2D; margin-top: 8px; display: none; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--teal-light); }
+  .selected-methods-display { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .method-badge { background: var(--teal-light); color: var(--teal-dark); border: 1px solid var(--teal-mid); border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 700; }
+
+  .completion-hero { text-align: center; padding: 3rem 2rem; background: var(--white); border-radius: var(--radius); border: 1px solid #e8e6df; margin-bottom: 2rem; }
+  .completion-icon { font-size: 48px; margin-bottom: 1rem; display: block; }
+  .completion-hero h2 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
+  .completion-hero p { font-size: 14px; color: var(--text-muted); line-height: 1.6; max-width: 480px; margin: 0 auto 1.5rem; }
+
+  @media (max-width: 600px) { .methods-grid { grid-template-columns: 1fr; } .stat-strip { grid-template-columns: 1fr 1fr; } .phase-title { font-size: 22px; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">🤖</div>
+      <div class="brand-name">Rosie <span>Home Tech</span></div>
+    </div>
+    <div class="header-tag">Needs Assessment Lab</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-inner" id="progressBar"></div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- PHASE 1: PROBLEM -->
+  <section class="phase active" id="phase-1">
+    <div class="phase-hero">
+      <div class="phase-eyebrow">Phase 1 of 5 — The Problem</div>
+      <h1 class="phase-title">Meet Rosie. Something's not adding up.</h1>
+      <p class="phase-subtitle">Read the organizational scenario carefully. Your job as an instructional designer begins here — before any data, before any solution.</p>
+    </div>
+
+    <div class="student-info">
+      <h4>Student Information <span style="font-size:12px;color:#E24B4A;font-family:'Raleway',sans-serif;font-weight:500;">* All fields required</span></h4>
+      <div class="field-row"><label>Student Name <span style="color:#E24B4A;">*</span></label><input type="text" id="student-name" placeholder="Enter your full name"></div>
+      <div class="field-row"><label>Date <span style="color:#E24B4A;">*</span></label><input type="text" id="student-date" placeholder="MM/DD/YYYY"></div>
+      <div class="field-row"><label>Course Section <span style="color:#E24B4A;">*</span></label><input type="text" id="student-section" placeholder="e.g., OLL 4550 - Section 001"></div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat-box"><span class="val">↓41%</span><span class="lbl">conversion rate vs. target</span></div>
+      <div class="stat-box"><span class="val">340</span><span class="lbl">sales associates nationwide</span></div>
+      <div class="stat-box"><span class="val">3</span><span class="lbl">Rosie product lines</span></div>
+      <div class="stat-box"><span class="val">6 mo.</span><span class="lbl">since product launch</span></div>
+    </div>
+
+    <div class="scenario-card">
+      <h3>The Company</h3>
+      <p>Rosie Home Tech is a fast-growing consumer robotics company headquartered in <strong>Raleigh, North Carolina</strong>. Their flagship product line — the Rosie robot series — represents the next generation of AI-powered home assistants. Three models are currently on the market:</p>
+      <table class="product-table">
+        <thead><tr><th>Model</th><th>Features</th><th>Price</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Rosie Classic</strong></td><td>Cleaning, cooking, and laundry</td><td class="price">$899</td></tr>
+          <tr><td><strong>Rosie Pro</strong></td><td>Everything in Classic, plus grocery management with Instacart and shopping app integration, and home security integration</td><td class="price">$1,499</td></tr>
+          <tr><td><strong>Rosie Elite</strong></td><td>Everything in Classic and Pro, plus household schedule management and customized K–12 adaptive tutoring</td><td class="price">$2,299</td></tr>
+        </tbody>
+      </table>
+      <p>Rosie Home Tech sells through 47 retail partner locations across the country. Sales associates at these locations are employed by the retail partners but complete onboarding through Rosie Home Tech's training portal when they begin selling the product line.</p>
+    </div>
+
+    <div class="scenario-card">
+      <h3>The Performance Problem</h3>
+      <p>Six months after the national launch, Rosie Home Tech's regional sales managers are raising urgent concerns. Despite strong foot traffic and high product awareness among customers, <strong>conversion rates are 41% below the projected target</strong>. Customers are picking up the display units, engaging with associates, and then leaving without purchasing.</p>
+      <p>Regional managers are reporting that customers are leaving with unresolved questions — particularly around AI privacy, product reliability, smart home compatibility, and price justification. <em>The source and scale of these concerns has not been formally documented.</em></p>
+      <p>Regional managers also report that associates seem knowledgeable about hardware specs but struggle when conversations shift to AI behavior, personalization features, and value comparison across the three models. Several managers have noted that associates are "reading from the card" rather than having genuine conversations with customers.</p>
+      <p>Rosie Home Tech's VP of Sales has engaged your instructional design team to investigate and recommend a training intervention. <strong>You have not yet collected any data.</strong> That is your first task.</p>
+    </div>
+
+    <div class="warn-banner">
+      <strong>Your role:</strong> You are the instructional designer on this project. Before you can analyze anything, you must decide how you will gather information about the performance gap. <strong>You are required to select exactly two needs assessment methods.</strong> Your data in the next phase will reflect exactly what you choose. When complete, you will download your PDF, upload it to Google Drive, and submit your link via AsULearn.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="validateAndProceed()">Begin Needs Assessment →</button>
+    </div>
+    <div class="error-msg" id="studentinfo-error">Please complete all three fields — Student Name, Date, and Course Section — before continuing.</div>
+  </section>
+
+  <!-- PHASE 2: METHOD SELECTION -->
+  <section class="phase" id="phase-2">
+    <div class="phase-hero">
+      <div class="phase-eyebrow">Phase 2 of 5 — Strategy Selection</div>
+      <h1 class="phase-title">How will you gather the data?</h1>
+      <p class="phase-subtitle">Select exactly two needs assessment methods. Each method reveals different information. Your data in the next phase will match exactly what you choose.</p>
+    </div>
+
+    <p class="select-note"><strong>Required: select exactly 2 methods.</strong> Click a selected method to deselect it. Both selections must be confirmed before you can proceed.</p>
+
+    <div class="methods-grid" id="methodsGrid">
+      <div class="method-card" data-method="surveys" onclick="toggleMethod(this)">
+        <span class="method-icon">📋</span>
+        <div class="method-name">Surveys</div>
+        <div class="method-desc">Gather quantitative and scaled-response data from a large group. Best for measuring frequency, confidence levels, and identifying patterns across a population.</div>
+      </div>
+      <div class="method-card" data-method="interviews" onclick="toggleMethod(this)">
+        <span class="method-icon">🎙️</span>
+        <div class="method-name">Interviews</div>
+        <div class="method-desc">Collect in-depth qualitative insights through one-on-one or small group conversations. Best for understanding experiences, motivations, and nuanced perspectives.</div>
+      </div>
+      <div class="method-card" data-method="observations" onclick="toggleMethod(this)">
+        <span class="method-icon">👁️</span>
+        <div class="method-name">Observations</div>
+        <div class="method-desc">Watch performers in their natural work environment. Best for identifying workflow gaps, environmental barriers, and behaviors people may not self-report.</div>
+      </div>
+      <div class="method-card" data-method="training" onclick="toggleMethod(this)">
+        <span class="method-icon">📂</span>
+        <div class="method-name">Training Data Review</div>
+        <div class="method-desc">Analyze existing training records, portal completion logs, module engagement data, quiz performance, and content gap analysis from the current curriculum.</div>
+      </div>
+    </div>
+
+    <div id="phase2-justification" style="display:none;">
+      <div class="section-label">Justify Your Selection</div>
+      <div class="justify-block">
+        <label>Why did you choose these two methods?</label>
+        <span class="sub-label">For each method: (1) name the specific type of information it will yield, (2) explain why that information is necessary given what the problem describes, and (3) identify what you would NOT be able to learn without it. <strong>Minimum 150 words.</strong></span>
+        <textarea id="justification-text" rows="8" placeholder="Write your justification here. Be specific — connect each method choice directly to what the problem scenario tells you about the performance gap..." oninput="updateCounter('justification-text','justify-count',150)"></textarea>
+        <div class="word-counter" id="justify-count">0 / 150 words minimum</div>
+        <div class="error-msg" id="justify-error">Please write a justification of at least 150 words before continuing.</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goToPhase(1)">← Back</button>
+      <button class="btn-primary" id="btn-to-phase3" onclick="proceedToData()" disabled>Reveal My Data →</button>
+    </div>
+    <div class="error-msg" id="method-error" style="margin-top:8px;">You must select exactly 2 methods before continuing.</div>
+  </section>
+
+  <!-- PHASE 3: DATA REVEAL -->
+  <section class="phase" id="phase-3">
+    <div class="phase-hero">
+      <div class="phase-eyebrow">Phase 3 of 5 — Data Received</div>
+      <h1 class="phase-title">Here's what your methods revealed.</h1>
+      <p class="phase-subtitle">The data below reflects the two methods you selected. Read everything carefully before drawing any conclusions.</p>
+    </div>
+    <div id="selected-methods-display" class="selected-methods-display"></div>
+    <div id="data-panels"></div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goToPhase(2)">← Back</button>
+      <button class="btn-primary" onclick="goToPhase(4)">Proceed to Analysis →</button>
+    </div>
+  </section>
+
+  <!-- PHASE 4: ANALYSIS -->
+  <section class="phase" id="phase-4">
+    <div class="phase-hero">
+      <div class="phase-eyebrow">Phase 4 of 5 — Analysis</div>
+      <h1 class="phase-title">What does the data tell you?</h1>
+      <p class="phase-subtitle">Use evidence from your dataset(s) to answer each prompt. Ground every claim in specific data — no general statements without evidence.</p>
+    </div>
+
+    <div class="prompt-item">
+      <div class="q-num">Prompt 01 — Performance Gap</div>
+      <div class="q-text">What is the performance or learning gap? Be precise.</div>
+      <div class="q-hint">Describe what associates are currently doing versus what they should be doing. Distinguish between a knowledge gap, a skill gap, and a motivational or environmental gap. Minimum 100 words.</div>
+      <textarea id="analysis-1" rows="6" placeholder="Based on the data, the performance gap is..." oninput="updateCounter('analysis-1','count-1',100)"></textarea>
+      <div class="word-counter" id="count-1">0 / 100 words minimum</div>
+    </div>
+
+    <div class="prompt-item">
+      <div class="q-num">Prompt 02 — Learner Population & Context</div>
+      <div class="q-text">Describe the learner population and organizational context.</div>
+      <div class="q-hint">Who are these learners? Consider role diversity, prior experience, work environment, technology access, and contextual factors a training solution must account for. Minimum 100 words.</div>
+      <textarea id="analysis-2" rows="6" placeholder="The learner population consists of..." oninput="updateCounter('analysis-2','count-2',100)"></textarea>
+      <div class="word-counter" id="count-2">0 / 100 words minimum</div>
+    </div>
+
+    <div class="prompt-item">
+      <div class="q-num">Prompt 03 — Limitations of the Data</div>
+      <div class="q-text">What does the data NOT tell you? What would you still need to know?</div>
+      <div class="q-hint">Identify what questions remain unanswered and what a second round of needs assessment would need to address. Minimum 100 words.</div>
+      <textarea id="analysis-3" rows="6" placeholder="The data does not fully address..." oninput="updateCounter('analysis-3','count-3',100)"></textarea>
+      <div class="word-counter" id="count-3">0 / 100 words minimum</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goToPhase(3)">← Back</button>
+      <button class="btn-primary" onclick="proceedToNextSteps()">Proceed to Next Steps →</button>
+    </div>
+    <div class="error-msg" id="analysis-error">All three prompts must meet the 100-word minimum before continuing.</div>
+  </section>
+
+  <!-- PHASE 5: NEXT STEPS -->
+  <section class="phase" id="phase-5">
+    <div class="phase-hero">
+      <div class="phase-eyebrow">Phase 5 of 5 — Next Steps</div>
+      <h1 class="phase-title">What should Rosie Home Tech do?</h1>
+      <p class="phase-subtitle">Propose a digital learning solution grounded in your analysis. Every recommendation must be justified by your data.</p>
+    </div>
+
+    <div class="checklist">
+      <h4>Required components — all four must be addressed:</h4>
+      <div class="check-item"><strong>LMS (Learning Management System)</strong> — name a specific platform and explain why it fits this organizational context.</div>
+      <div class="check-item"><strong>Authoring Tool</strong> — name a specific tool and explain what type of content you would build with it for this scenario.</div>
+      <div class="check-item"><strong>Collaboration Tool</strong> — name a specific platform and explain how it supports this distributed workforce.</div>
+      <div class="check-item"><strong>At least two Digital Learning Strategies</strong> — for each, explain how it connects to the specific gap you identified in your analysis.</div>
+    </div>
+
+    <div class="warn-banner">
+      <strong>Organizational constraint:</strong> Sales associates work in retail partner locations with varying schedules. Not all associates have access to a desktop computer during work hours. Any proposed solution must account for these real-world conditions.
+    </div>
+
+    <div class="prompt-item">
+      <div class="q-num">Next Steps Response</div>
+      <div class="q-text">Propose your digital learning solution for Rosie Home Tech.</div>
+      <div class="q-hint">Justify every tool and strategy recommendation by connecting it back to what your data revealed. Minimum 200 words.</div>
+      <textarea id="nextsteps-text" rows="12" placeholder="Based on my analysis of the Rosie Home Tech performance gap, I recommend the following digital learning solution...&#10;&#10;LMS: ...&#10;Authoring Tool: ...&#10;Collaboration Tool: ...&#10;Digital Learning Strategies: ..." oninput="updateCounter('nextsteps-text','count-ns',200)"></textarea>
+      <div class="word-counter" id="count-ns">0 / 200 words minimum</div>
+      <div class="error-msg" id="nextsteps-error">Your Next Steps response must be at least 200 words and address all four required components.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goToPhase(4)">← Back</button>
+      <button class="btn-primary" onclick="proceedToComplete()">Generate My Assessment →</button>
+    </div>
+  </section>
+
+  <!-- PHASE 6: COMPLETE -->
+  <section class="phase" id="phase-6">
+    <div class="completion-hero">
+      <span class="completion-icon">🎉</span>
+      <h2>Needs Assessment Complete!</h2>
+      <p>You've successfully worked through all five phases. Download your PDF brief below, upload it to your Google Drive, then submit your Google Drive link via AsULearn.</p>
+    </div>
+    <div class="scenario-card">
+      <h3>Your Assessment Summary</h3>
+      <div id="summary-display"></div>
+    </div>
+    <div class="btn-row" style="justify-content:center;">
+      <button class="btn-download" onclick="generatePDF()">⬇ Download PDF — Submit to AsULearn</button>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--text-light);margin-top:10px;">Download your PDF → Upload to Google Drive → Submit your Google Drive link via AsULearn. Complete this activity in one sitting — progress is not saved between sessions.</p>
+  </section>
+
+</main>
+
+<script>
+const state = { selectedMethods: [], justification: '', studentName: '', studentDate: '', studentSection: '', analysis1: '', analysis2: '', analysis3: '', nextSteps: '' };
+const STEPS = ['Problem','Strategy','Data','Analysis','Next Steps','Complete'];
+
+function renderProgress(n) {
+  document.getElementById('progressBar').innerHTML = STEPS.map((s,i) => {
+    const p = i+1; let cls = 'step-dot';
+    if (p===n) cls+=' active'; else if (p<n) cls+=' done';
+    const conn = i<STEPS.length-1 ? '<div class="step-connector"></div>' : '';
+    return `<div class="${cls}"><div class="dot"></div><span class="step-label">${s}</span></div>${conn}`;
+  }).join('');
+}
+
+function goToPhase(n) {
+  document.querySelectorAll('.phase').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`phase-${n}`).classList.add('active');
+  renderProgress(n);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function countWords(text) {
+  return text.trim().split(/\s+/).filter(w=>w.length>0).length;
+}
+
+function updateCounter(textareaId, counterId, min) {
+  const txt = document.getElementById(textareaId).value;
+  const count = countWords(txt);
+  const el = document.getElementById(counterId);
+  el.textContent = `${count} / ${min} words minimum`;
+  el.className = 'word-counter' + (count>=min ? ' met' : count>min*0.7 ? '' : ' warn');
+}
+
+function toggleMethod(card) {
+  const method = card.dataset.method;
+  const idx = state.selectedMethods.indexOf(method);
+  if (idx > -1) {
+    state.selectedMethods.splice(idx,1);
+    card.classList.remove('selected');
+  } else {
+    if (state.selectedMethods.length >= 2) return;
+    state.selectedMethods.push(method);
+    card.classList.add('selected');
+  }
+  document.querySelectorAll('.method-card').forEach(c => {
+    if (!c.classList.contains('selected')) {
+      c.classList.toggle('disabled', state.selectedMethods.length >= 2);
+    }
+  });
+  const exactly2 = state.selectedMethods.length === 2;
+  document.getElementById('phase2-justification').style.display = exactly2 ? 'block' : 'none';
+  document.getElementById('btn-to-phase3').disabled = !exactly2;
+}
+
+function proceedToData() {
+  const txt = document.getElementById('justification-text').value.trim();
+  if (state.selectedMethods.length !== 2) { document.getElementById('method-error').style.display='block'; return; }
+  document.getElementById('method-error').style.display='none';
+  if (countWords(txt) < 150) { document.getElementById('justify-error').style.display='block'; return; }
+  document.getElementById('justify-error').style.display='none';
+  state.justification = txt;
+  buildDataPanels();
+  goToPhase(3);
+}
+
+// ── DATASETS ──
+const DATA = {
+  surveys: {
+    title: 'Survey Data',
+    tag: 'Quantitative Data',
+    html: `
+      <div class="data-sub">Part A — Customer Exit Survey</div>
+      <p style="font-size:13px;color:#5F5E5A;margin-bottom:12px;line-height:1.6;">Exit surveys collected at point of departure for non-purchasing customers across 12 retail locations over 60 days. Total responses: 1,240.</p>
+      <table class="data-tbl">
+        <thead><tr><th>Primary Reason for Not Purchasing</th><th>% of Respondents</th></tr></thead>
+        <tbody>
+          <tr><td>Had unanswered questions about the product</td><td><span class="pill pill-red">67%</span></td></tr>
+          <tr><td>Concerns about AI privacy and data security</td><td><span class="pill pill-red">61%</span></td></tr>
+          <tr><td>Associate did not seem confident answering questions</td><td><span class="pill pill-red">54%</span></td></tr>
+          <tr><td>Unsure which model was right for their home</td><td>47%</td></tr>
+          <tr><td>Price was higher than expected</td><td>41%</td></tr>
+          <tr><td>Needed more time to research</td><td>38%</td></tr>
+        </tbody>
+      </table>
+      <table class="data-tbl" style="margin-top:10px;">
+        <thead><tr><th>Unresolved Customer Question Theme</th><th>Frequency</th></tr></thead>
+        <tbody>
+          <tr><td>How does Rosie's AI learn preferences without being invasive?</td><td><span class="pill pill-red">68%</span></td></tr>
+          <tr><td>What happens when Rosie makes a mistake?</td><td><span class="pill pill-red">57%</span></td></tr>
+          <tr><td>Will Rosie work with existing smart home devices?</td><td>49%</td></tr>
+          <tr><td>Is the price justified for what it does?</td><td>44%</td></tr>
+          <tr><td>Does Rosie Elite's tutoring work for all grade levels?</td><td>31%</td></tr>
+        </tbody>
+      </table>
+      <div class="data-sub" style="margin-top:1.5rem;">Part B — Employee Self-Assessment Survey</div>
+      <p style="font-size:13px;color:#5F5E5A;margin-bottom:12px;line-height:1.6;">28-question digital survey distributed to all 340 Rosie-certified associates. Response rate: 78% (n=265).</p>
+      <table class="data-tbl">
+        <thead><tr><th>Survey Item</th><th>Confident / Agree</th><th>Not Confident / Disagree</th></tr></thead>
+        <tbody>
+          <tr><td>I can explain the difference between Classic, Pro, and Elite clearly</td><td><span class="pill pill-green">79%</span></td><td>21%</td></tr>
+          <tr><td>I can explain how Rosie's AI learns and adapts over time</td><td><span class="pill pill-red">26%</span></td><td><span class="pill pill-red">74%</span></td></tr>
+          <tr><td>I feel confident handling customer questions about AI privacy</td><td><span class="pill pill-red">19%</span></td><td><span class="pill pill-red">81%</span></td></tr>
+          <tr><td>I can explain Rosie Elite's K–12 tutoring features confidently</td><td><span class="pill pill-red">22%</span></td><td><span class="pill pill-red">78%</span></td></tr>
+          <tr><td>The initial onboarding prepared me to answer AI-related questions</td><td><span class="pill pill-red">16%</span></td><td><span class="pill pill-red">84%</span></td></tr>
+          <tr><td>I have access to job aids or quick references during customer interactions</td><td><span class="pill pill-red">11%</span></td><td><span class="pill pill-red">89%</span></td></tr>
+          <tr><td>I would benefit from scenario-based practice with difficult customer questions</td><td><span class="pill pill-green">93%</span></td><td>7%</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;padding:10px 14px;background:#F1EFE8;border-radius:8px;font-size:12px;color:#5F5E5A;line-height:1.5;">
+        <strong style="color:#2C2C2A;">Open response themes (n=198):</strong> AI uncertainty (76%), lack of point-of-sale job aids (63%), onboarding was product-focused not conversation-focused (41%).
+      </div>`
+  },
+  interviews: {
+    title: 'Interview Transcripts',
+    tag: 'Qualitative Data',
+    html: `
+      <p style="font-size:13px;color:#5F5E5A;margin-bottom:12px;line-height:1.6;">Semi-structured interviews with 14 sales associates and 6 regional managers across 4 retail locations. Interviews averaged 24 minutes.</p>
+      <div class="data-sub">Sales Associate Voices</div>
+      <div class="quote"><p>"I know the specs cold. But when someone asks me if Rosie is going to be watching them sleep, I honestly don't know what to say. I usually just say it doesn't do that and hope they believe me."</p><div class="attr">— Sales Associate, 14 months with product line</div></div>
+      <div class="quote"><p>"The Elite is hard to sell because of the tutoring feature. Parents get excited but then ask how it actually works — how does it know what grade their kid is in, how does it adapt — and I freeze. The onboarding never covered that."</p><div class="attr">— Sales Associate, 8 months with product line</div></div>
+      <div class="quote"><p>"I made my own cheat sheet. I keep it in my apron pocket — what AI means in plain English, the three things customers always worry about, what to say about privacy. I made it myself because nothing was provided."</p><div class="attr">— Top-performing Associate (identified by manager), 11 months</div></div>
+      <div class="quote"><p>"The training was a product dump. Here are the robots, here are the features, here is the price. Nobody taught us how to have a conversation. Selling an AI product is completely different from selling a television."</p><div class="attr">— Sales Associate, 6 months with product line</div></div>
+      <div class="data-sub">Regional Manager Voices</div>
+      <div class="quote"><p>"My team doesn't use the portal. It's not that they don't want to — it's that it's not on their phones and they can't access it from the floor. It's a desktop site. Nobody has time to sit at a computer before a shift."</p><div class="attr">— Regional Manager, Southeast Region</div></div>
+      <div class="quote"><p>"New associates get two hours on the portal at onboarding and then they're on the floor alone. No follow-up, no practice. The ones who figure it out do it through trial and error with real customers. That's not a training program — that's sink or swim."</p><div class="attr">— Regional Manager, Midwest Region</div></div>
+      <div class="quote"><p>"I've had three associates this month tell me a customer was interested in the Elite and then walked because they couldn't answer the tutoring questions. That's a $2,299 conversion we're losing repeatedly to the same knowledge gap."</p><div class="attr">— Regional Manager, Southwest Region</div></div>`
+  },
+  observations: {
+    title: 'Field Observation Notes',
+    tag: 'Behavioral Data',
+    html: `
+      <p style="font-size:13px;color:#5F5E5A;margin-bottom:12px;line-height:1.6;">ID team members conducted structured in-store observations at 3 retail partner locations over 2 full business days, observing 34 associate-customer interactions at the Rosie display.</p>
+      <div class="obs-item"><div class="obs-num">1</div><div class="obs-text">In 29 of 34 interactions, associates led with hardware specs before customers asked a features-based question. Only 3 associates opened with a discovery question about the customer's household or lifestyle.</div></div>
+      <div class="obs-item"><div class="obs-num">2</div><div class="obs-text">AI-related questions arose in 22 of 34 interactions. In all 22 cases, associates visibly paused, consulted the product card, or gave a response under 10 words. No associate gave a complete, confident answer to an AI behavior or privacy question.</div></div>
+      <div class="obs-item"><div class="obs-num">3</div><div class="obs-text">All three locations displayed only the Rosie product card. No comparison guides, FAQ sheets, or tablet/kiosk content were available. One associate was observed using a personal handwritten reference card from their apron pocket.</div></div>
+      <div class="obs-item"><div class="obs-num">4</div><div class="obs-text">In 14 of 22 interactions where AI questions arose, the customer left the display area within 4 minutes of the unanswered question. In the remaining 8, associates redirected to price or hardware — 6 of those customers also left without purchasing.</div></div>
+      <div class="obs-item"><div class="obs-num">5</div><div class="obs-text">Associates showed notably stronger confidence during physical product demos (movement, docking, app pairing) than during any conversational segment involving AI capabilities or model comparison.</div></div>
+      <div class="obs-item"><div class="obs-num">6</div><div class="obs-text">No associate attempted to match a customer to a specific model based on their stated household needs. All upselling attempts were price-led. The Rosie Elite was mentioned proactively in only 2 of 34 interactions.</div></div>
+      <div class="obs-item"><div class="obs-num">7</div><div class="obs-text">When customers asked about Elite's K–12 tutoring, all associates responded with variations of "it helps kids with school." No associate demonstrated understanding of how the adaptive learning component works or what subjects it covers.</div></div>`
+  },
+  training: {
+    title: 'Training Data Review',
+    tag: 'Archival Data',
+    html: `
+      <p style="font-size:13px;color:#5F5E5A;margin-bottom:12px;line-height:1.6;">Data collected from the Rosie Home Tech training portal LMS, module completion logs, quiz performance analytics, and a full content audit. All data reflects the 6-month post-launch period.</p>
+      <div class="data-sub">Portal Completion & Engagement</div>
+      <table class="data-tbl">
+        <thead><tr><th>Metric</th><th>Data Point</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td>Onboarding completion rate</td><td><span class="pill pill-amber">71%</span></td><td>29% of certified associates never completed onboarding</td></tr>
+          <tr><td>Associates completing any training post-onboarding</td><td><span class="pill pill-red">9%</span></td><td>No structured refresher training exists</td></tr>
+          <tr><td>Average time in onboarding (designed for 2.5 hrs)</td><td>1 hr 42 min</td><td>Content is being skipped</td></tr>
+          <tr><td>Portal sessions accessed from mobile device</td><td><span class="pill pill-red">4%</span></td><td>Portal is not mobile-optimized</td></tr>
+          <tr><td>Avg. quiz score — product knowledge</td><td><span class="pill pill-green">81%</span></td><td>Hardware content is performing well</td></tr>
+          <tr><td>Avg. quiz score — AI behavior content</td><td><span class="pill pill-red">34%</span></td><td>Severe gap specific to AI knowledge</td></tr>
+          <tr><td>Avg. quiz score — consultative selling module</td><td><span class="pill pill-red">47%</span></td><td>Selling skills content underperforming</td></tr>
+        </tbody>
+      </table>
+      <div class="data-sub" style="margin-top:1.5rem;">Training Content Audit</div>
+      <table class="data-tbl">
+        <thead><tr><th>Module</th><th>Content Focus</th><th>Completion</th><th>Gap</th></tr></thead>
+        <tbody>
+          <tr><td>Modules 1–3</td><td>Product specs — Classic, Pro, Elite</td><td><span class="pill pill-green">74–88%</span></td><td>Adequate</td></tr>
+          <tr><td>Module 4</td><td>How Rosie's AI works</td><td><span class="pill pill-red">51%</span></td><td>Too technical — not written for customer conversations</td></tr>
+          <tr><td>Module 5</td><td>Privacy and data security overview</td><td><span class="pill pill-red">48%</span></td><td>Does not address common customer objections specifically</td></tr>
+          <tr><td>Module 6</td><td>Point-of-sale system procedures</td><td><span class="pill pill-green">79%</span></td><td>Adequate</td></tr>
+          <tr><td>Module 7</td><td>General sales techniques (not Rosie-specific)</td><td><span class="pill pill-red">43%</span></td><td>Generic — not applied to AI product context</td></tr>
+          <tr><td style="color:#A32D2D;font-weight:700;">Missing</td><td>Consultative selling by Rosie model tier</td><td>—</td><td><span class="pill pill-missing">CONTENT DOES NOT EXIST</span></td></tr>
+          <tr><td style="color:#A32D2D;font-weight:700;">Missing</td><td>Handling AI objections and customer concerns</td><td>—</td><td><span class="pill pill-missing">CONTENT DOES NOT EXIST</span></td></tr>
+          <tr><td style="color:#A32D2D;font-weight:700;">Missing</td><td>Rosie Elite tutoring — customer-facing explanation</td><td>—</td><td><span class="pill pill-missing">CONTENT DOES NOT EXIST</span></td></tr>
+        </tbody>
+      </table>
+      <div class="data-sub" style="margin-top:1.5rem;">Conversion Rate by Product Tier</div>
+      <table class="data-tbl">
+        <thead><tr><th>Product</th><th>Projected Rate</th><th>Actual Rate</th><th>Gap</th></tr></thead>
+        <tbody>
+          <tr><td>Rosie Classic</td><td>40%</td><td><span class="pill pill-amber">33%</span></td><td>-7%</td></tr>
+          <tr><td>Rosie Pro</td><td>30%</td><td><span class="pill pill-red">21%</span></td><td>-9%</td></tr>
+          <tr><td>Rosie Elite</td><td>22%</td><td><span class="pill pill-red">7%</span></td><td style="color:#A32D2D;font-weight:700;">-15%</td></tr>
+        </tbody>
+      </table>`
+  }
+};
+
+function buildDataPanels() {
+  const methodNames = {surveys:'Surveys',interviews:'Interviews',observations:'Observations',training:'Training Data Review'};
+  document.getElementById('selected-methods-display').innerHTML = state.selectedMethods.map(m=>`<span class="method-badge">${methodNames[m]}</span>`).join('');
+  document.getElementById('data-panels').innerHTML = state.selectedMethods.map(m=>{
+    const d = DATA[m];
+    return `<div class="data-reveal"><div class="data-header"><span class="tag">${d.tag}</span><h4>${d.title}</h4></div><div class="data-body">${d.html}</div></div>`;
+  }).join('');
+}
+
+function proceedToNextSteps() {
+  const a1 = document.getElementById('analysis-1').value.trim();
+  const a2 = document.getElementById('analysis-2').value.trim();
+  const a3 = document.getElementById('analysis-3').value.trim();
+  if (countWords(a1)<100||countWords(a2)<100||countWords(a3)<100) {
+    document.getElementById('analysis-error').style.display='block'; return;
+  }
+  document.getElementById('analysis-error').style.display='none';
+  state.analysis1=a1; state.analysis2=a2; state.analysis3=a3;
+  goToPhase(5);
+}
+
+function proceedToComplete() {
+  const txt = document.getElementById('nextsteps-text').value.trim();
+  if (countWords(txt)<200) { document.getElementById('nextsteps-error').style.display='block'; return; }
+  document.getElementById('nextsteps-error').style.display='none';
+  state.nextSteps=txt;
+  state.studentName=document.getElementById('student-name').value.trim()||'Not provided';
+  state.studentDate=document.getElementById('student-date').value.trim()||'Not provided';
+  state.studentSection=document.getElementById('student-section').value.trim()||'Not provided';
+  buildSummary();
+  goToPhase(6);
+}
+
+function buildSummary() {
+  const methodNames={surveys:'Surveys',interviews:'Interviews',observations:'Observations',training:'Training Data Review'};
+  document.getElementById('summary-display').innerHTML=`
+    <p style="font-size:13px;color:#5F5E5A;margin-bottom:12px;">Review your completed assessment. Download the PDF to submit to AsULearn.</p>
+    <p style="font-size:13px;margin-bottom:6px;"><strong>Student:</strong> ${state.studentName} &nbsp;|&nbsp; <strong>Date:</strong> ${state.studentDate} &nbsp;|&nbsp; <strong>Section:</strong> ${state.studentSection}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">${state.selectedMethods.map(m=>`<span class="method-badge">${methodNames[m]}</span>`).join('')}</div>
+    <p style="font-size:13px;color:#2C2C2A;line-height:1.5;"><strong>Justification preview:</strong> ${state.justification.substring(0,140)}...</p>`;
+}
+
+// ── PDF ──
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'letter' });
+  const pw=doc.internal.pageSize.getWidth(), ph=doc.internal.pageSize.getHeight();
+  const ml=56, mr=56, tw=pw-ml-mr;
+  let y=0;
+  const methodNames={surveys:'Surveys',interviews:'Interviews',observations:'Observations',training:'Training Data Review'};
+  const methodsLabel=state.selectedMethods.map(m=>methodNames[m]).join(' + ');
+  const today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  function footer() {
+    const pn=doc.internal.getNumberOfPages();
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(150,150,140);
+    doc.text('Rosie Home Tech — Needs Assessment Lab  |  OLL 4550 Digital Learning Systems  |  Appalachian State University',ml,ph-28);
+    doc.text(`Page ${pn}`,pw-mr,ph-28,{align:'right'});
+    doc.setDrawColor(200,198,190); doc.setLineWidth(0.5); doc.line(ml,ph-38,pw-mr,ph-38);
+  }
+
+  function checkPage(n) {
+    if (y+n>ph-60) { doc.addPage(); footer(); y=60; }
+  }
+
+  // COVER
+  doc.setFillColor(44,44,42); doc.rect(0,0,pw,ph,'F');
+  doc.setFillColor(29,158,117); doc.rect(0,ph-10,pw,10,'F');
+  doc.setFillColor(26,56,48); doc.rect(pw-200,0,200,200,'F');
+  doc.setFillColor(239,159,39);
+  doc.rect(ml,ph-96,190,30,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(99,56,6);
+  doc.text('STUDENT SUBMISSION',ml+10,ph-72);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(93,202,165);
+  doc.text('NEEDS ASSESSMENT BRIEF',ml,200);
+  doc.setFont('times','bold'); doc.setFontSize(40); doc.setTextColor(255,255,255);
+  doc.text('Rosie Home Tech',ml,248);
+  doc.setFont('times','italic'); doc.setFontSize(18); doc.setTextColor(93,202,165);
+  doc.text('Sales Performance Gap Analysis',ml,285);
+  doc.setDrawColor(29,158,117); doc.setLineWidth(1.5); doc.line(ml,306,ml+320,306);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(180,178,169);
+  [[`Student: ${state.studentName}`,330],[`Date: ${state.studentDate}`,350],[`Course Section: ${state.studentSection}`,370],[`Methods Used: ${methodsLabel}`,390],[`Submission Date: ${today}`,410]].forEach(([t,yy])=>doc.text(t,ml,yy));
+  doc.addPage();
+
+  // BODY PAGES
+  y=60; footer();
+
+  function sectionHeader(num, title) {
+    checkPage(60);
+    doc.setFillColor(44,44,42); doc.rect(ml,y,tw,42,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(93,202,165);
+    doc.text(`SECTION ${num}`,ml+14,y+15);
+    doc.setFont('times','bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
+    doc.text(title,ml+14,y+32); y+=56;
+  }
+
+  function subHead(text) {
+    checkPage(28); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(29,158,117);
+    doc.text(text.toUpperCase(),ml,y); y+=18;
+    doc.setDrawColor(225,245,238); doc.setLineWidth(1); doc.line(ml,y,pw-mr,y); y+=10;
+  }
+
+  function bodyTxt(text, indent=false) {
+    const x=indent?ml+14:ml, w=indent?tw-14:tw;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(40,40,38);
+    const lines=doc.splitTextToSize(text,w);
+    lines.forEach(l=>{ checkPage(16); doc.text(l,x,y); y+=16; });
+    y+=6;
+  }
+
+  function divider() { checkPage(14); doc.setDrawColor(220,218,210); doc.setLineWidth(0.5); doc.line(ml,y,pw-mr,y); y+=12; }
+
+  // S1
+  sectionHeader('01','Needs Assessment Strategy');
+  subHead('Methods Selected'); bodyTxt(methodsLabel); divider();
+  subHead('Justification'); bodyTxt(state.justification); y+=8;
+
+  // S2
+  sectionHeader('02','Data Received');
+  const summaries = {
+    surveys: 'Survey data collected from 265 associates (78% response rate) and 1,240 customer exit surveys across 12 locations. Customer data revealed that 67% cited unanswered questions as primary reason for not purchasing, 61% had AI privacy concerns, and 54% noted associate lack of confidence. Employee survey showed only 19% feel confident handling AI privacy questions, only 22% can explain Elite tutoring features, 89% lack point-of-sale job aids, and 93% want scenario-based practice.',
+    interviews: 'Interviews with 14 associates and 6 regional managers revealed that associates are confident on hardware specs but unprepared for AI-related customer conversations. Associates are self-creating reference materials due to absence of provided job aids. The training portal is desktop-only and inaccessible on the floor. Onboarding was product-focused rather than conversation-focused. Top-tier (Elite) conversions are repeatedly lost to the same AI and tutoring knowledge gap.',
+    observations: '34 customer interactions observed across 3 locations. 29 of 34 associates led with specs instead of discovery questions. AI questions arose in 22 interactions — no associate gave a complete, confident response. 14 of 22 customers who asked AI questions left within 4 minutes of the unanswered question. No point-of-sale support materials existed at any location. The Elite tutoring feature was not proactively mentioned in 32 of 34 interactions.',
+    training: 'Portal records show 71% onboarding completion; only 9% of associates completed any post-onboarding training. Associates average 1hr 42min in a 2.5hr module — content is being skipped. Average quiz scores: product knowledge 81% (adequate), AI behavior 34% (severe gap), consultative selling 47% (underperforming). Content audit revealed three entirely missing modules: consultative selling by tier, handling AI objections, and Elite tutoring customer-facing explanation. Elite conversion rate is 7% against a 22% target.'
+  };
+  state.selectedMethods.forEach(m => {
+    subHead(methodNames[m]); bodyTxt(summaries[m],true); divider();
+  });
+  y+=4;
+
+  // S3
+  sectionHeader('03','Analysis');
+  subHead('Performance / Learning Gap'); bodyTxt(state.analysis1); divider();
+  subHead('Learner Population & Organizational Context'); bodyTxt(state.analysis2); divider();
+  subHead('Limitations of the Data'); bodyTxt(state.analysis3); y+=8;
+
+  // S4
+  sectionHeader('04','Next Steps');
+  bodyTxt(state.nextSteps);
+
+  footer();
+  doc.save(`${state.studentName.replace(/\s+/g,'_') || 'Student'}_Rosie_NeedsAssessment.pdf`);
+}
+
+function validateAndProceed() {
+  const name = document.getElementById('student-name').value.trim();
+  const date = document.getElementById('student-date').value.trim();
+  const section = document.getElementById('student-section').value.trim();
+  if (!name || !date || !section) {
+    document.getElementById('studentinfo-error').style.display = 'block';
+    document.getElementById('studentinfo-error').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  document.getElementById('studentinfo-error').style.display = 'none';
+  goToPhase(2);
+}
+
+renderProgress(1);
+</script>
+</body>
+</html>
